@@ -1,0 +1,38 @@
+---
+title: 'Section 1: Introduction to Data Visualization and Distributions'
+author: "kevinoliva26"
+date: "11/23/2020"
+output: html_document
+---
+
+##1.1 Introduction to Data Visualization
+
+Categorical data are variables that are defined by a small number of groups.
+  Ordinal categorical data have an inherent order to the categories (mild/medium/hot, for example).
+  Non-ordinal categorical data have no order to the categories.
+Numerical data take a variety of numeric values.
+  Continuous variables can take any value.
+  Discrete variables are limited to sets of specific values.
+
+For categorical data we can construct this distribution by simply computing the frequency of each unique value. This can be done with the function *table*
+
+```{r}
+library(dslabs)
+data(heights)
+x <- heights$height
+head(table(x))
+```
+
+  
+##1.2 Introduction to Distributions
+
+
+```{r}
+# load the dataset
+library(dslabs)
+data(heights)
+
+# make a table of category proportions
+prop.table(table(heights$sex))  
+```
+
