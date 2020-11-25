@@ -607,3 +607,4 @@ library(gridExtra)
 grid.arrange(p1, p2, p3, ncol = 3)
 ```
 >>>>>>> c1ea3ff55daacaf93b5a58b750522a886d7a3442
+
