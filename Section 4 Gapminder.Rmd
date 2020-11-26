@@ -1,0 +1,32 @@
+---
+title: 'Section 4: Gapminder'
+author: "kevinoliva26"
+date: "11/26/2020"
+output: html_document
+---
+
+##Gapminder Dataset
+
+A selection of world health and economics statistics from the Gapminder project can be found in the dslabs package as data(gapminder).
+
+```{r}
+# load and inspect gapminder data
+library(dslabs)
+library(tidyverse)
+data(gapminder)
+head(gapminder)
+
+# compare infant mortality in Sri Lanka and Turkey
+gapminder %>%
+    filter(year == 2015 & country %in% c("Sri Lanka", "Turkey")) %>%
+    select(country, infant_mortality)
+
+# compare infant mortality in Guatemala
+gapminder %>% 
+  filter(country == "Guatemala" & year >="2000") %>% 
+  select(year, infant_mortality) %>% 
+  ggplot(aes(year,infant_mortality, label=year)) + 
+  geom_point(color="orange") + 
+  geom_text(size=3) 
+```
+
