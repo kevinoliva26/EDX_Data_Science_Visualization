@@ -140,4 +140,210 @@ dat %>%
     ylab("Difference between 2015 and 2010")
 ```
 
-##
+##Encoding a Third Variable
+
+Encode a categorical third variable on a scatterplot using color hue or shape. Use the *shape* argument to control shape.
+Encode a continuous third variable on a using *color intensity* or *size.*
+
+Vaccines save millions of lives, but misinformation has led some to question the safety of vaccines. The data support vaccines as safe and effective. We visualize data about measles incidence in order to demonstrate the impact of vaccination programs on disease rate.
+The *RColorBrewer* package offers several color palettes. Sequential color palettes are best suited for data that span from high to low. Diverging color palettes are best suited for data that are centered and diverge towards high or low values.
+The *geom_tile()* geometry creates a grid of colored tiles.
+Position and length are stronger cues than color for numeric values, but color can be appropriate sometimes.
+
+Tile plot of measles rate by year and state
+```{r}
+# import data and inspect
+library(tidyverse)
+library(dslabs)
+data(us_contagious_diseases)
+str(us_contagious_diseases)
+
+# assign dat to the per 10,000 rate of measles, removing Alaska and Hawaii and adjusting for weeks reporting
+the_disease <- "Measles"
+dat <- us_contagious_diseases %>%
+    filter(!state %in% c("Hawaii", "Alaska") & disease == the_disease) %>%
+    mutate(rate = count / population * 10000 * 52/weeks_reporting) %>%
+    mutate(state = reorder(state, rate))
+
+# plot disease rates per year in California
+dat %>% filter(state == "California" & !is.na(rate)) %>%
+    ggplot(aes(year, rate)) +
+    geom_line() +
+    ylab("Cases per 10,000") +
+    geom_vline(xintercept=1963, col = "blue")
+
+# tile plot of disease rate by state and year
+dat %>% ggplot(aes(year, state, fill=rate)) +
+    geom_tile(color = "grey50") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_fill_gradientn(colors = RColorBrewer::brewer.pal(9, "Reds"), trans = "sqrt") +
+    geom_vline(xintercept = 1963, col = "blue") +
+    theme_minimal() + theme(panel.grid = element_blank()) +
+    ggtitle(the_disease) +
+    ylab("") +
+    xlab("")
+```
+
+Line plot of measles rate by year and state
+```{r}
+# compute US average measles rate by year
+avg <- us_contagious_diseases %>%
+    filter(disease == the_disease) %>% group_by(year) %>%
+    summarize(us_rate = sum(count, na.rm = TRUE)/sum(population, na.rm = TRUE)*10000)
+
+# make line plot of measles rate by year by state
+dat %>%
+    filter(!is.na(rate)) %>%
+    ggplot() +
+    geom_line(aes(year, rate, group = state), color = "grey50", 
+        show.legend = FALSE, alpha = 0.2, size = 1) +
+    geom_line(mapping = aes(year, us_rate), data = avg, size = 1, col = "black") +
+    scale_y_continuous(trans = "sqrt", breaks = c(5, 25, 125, 300)) +
+    ggtitle("Cases per 10,000 by state") +
+    xlab("") +
+    ylab("") +
+    geom_text(data = data.frame(x = 1955, y = 50),
+        mapping = aes(x, y, label = "US average"), color = "black") +
+    geom_vline(xintercept = 1963, col = "blue")
+```
+
+##Avoid Pseudo and Gratuitous 3D Plots
+
+In general, pseudo-3D plots and gratuitous 3D plots only add confusion. Use regular 2D plots instead.
+
+##Avoid Too Many Significant Digits
+
+In tables, avoid using too many significant digits. Too many digits can distract from the meaning of your data.
+Reduce the number of significant digits globally by setting an option. For example, *options(digits = 3)* will cause all future computations that session to have 3 significant digits.
+Reduce the number of digits locally using *round()* or *signif()*.
+
+##Data Camp example
+```{r}
+library(dplyr)
+library(ggplot2)
+library(dslabs)
+library(RColorBrewer)
+data(us_contagious_diseases)
+
+us_contagious_diseases %>% filter(!is.na(population)) %>% 
+  group_by(year, disease) %>%
+  summarize(rate = sum(count)/sum(population)*10000) %>%
+  ggplot(aes(year, rate, color = disease)) + 
+  geom_line()
+```
+
+##Assessment: Titanic Survival
+
+Define the titanic dataset starting from the titanic library with the following code:
+```{r}
+options(digits = 3)    # report 3 significant digits
+library(tidyverse)
+library(titanic)
+
+titanic <- titanic_train %>%
+    select(Survived, Pclass, Sex, Age, SibSp, Parch, Fare) %>%
+    mutate(Survived = factor(Survived),
+           Pclass = factor(Pclass),
+           Sex = factor(Sex))
+```
+
+Make density plots of age grouped by sex. Try experimenting with combinations of faceting, alpha blending, stacking and using variable counts on the y-axis to answer the following questions. Some questions may be easier to answer with different versions of the density plot.
+```{r}
+library(dplyr)
+titanic %>% ggplot(aes(Age, color=Sex)) + geom_density(alpha=0.5) + geom_vline(xintercept = 5, col = "blue") + geom_vline(xintercept = 25, col = "red") 
+
+titanic %>% filter(Age >=40) %>% ggplot(aes(Sex)) + geom_bar()
+
+titanic %>% filter(Age >=18 & Age <=35) %>% ggplot(aes(Sex)) + geom_bar()
+
+titanic %>% filter(Age < 17) %>% ggplot(aes(Sex)) + geom_bar()
+
+#Oldest individual
+titanic[which.max(titanic$Age),"Sex"]
+```
+
+Use geom_qq() to make a QQ-plot of passenger age and add an identity line with geom_abline(). Filter out any individuals with an age of NA first. Use the following object as the dparams argument in geom_qq():
+```{r}
+library(titanic)
+titanic <- titanic_train %>%
+    select(Survived, Pclass, Sex, Age, SibSp, Parch, Fare) %>%
+    mutate(Survived = factor(Survived),
+           Pclass = factor(Pclass),
+           Sex = factor(Sex))
+
+titanic %>%
+    filter(!is.na(Age)) %>%
+    ggplot(aes(sample = Age)) +
+    geom_qq(dparams = params) +
+    geom_abline()
+```
+
+To answer the following questions, make barplots of the Survived and Sex variables using geom_bar(). Try plotting one variable and filling by the other variable. You may want to try the default plot, then try adding position = position_dodge() to geom_bar() to make separate bars for each group.
+```{r}
+#plot 1 - survival filled by sex
+titanic %>%
+    ggplot(aes(Survived, fill = Sex)) +
+    geom_bar()
+# plot 2 - survival filled by sex with position_dodge
+titanic %>%
+    ggplot(aes(Survived, fill = Sex)) +
+    geom_bar(position = position_dodge())
+#plot 3 - sex filled by survival
+titanic %>%
+    ggplot(aes(Sex, fill = Survived)) +
+    geom_bar()
+```
+
+Make a density plot of age filled by survival status. Change the y-axis to count and set alpha = 0.2.
+
+Which age group is the only group more likely to survive than die?
+```{r}
+#Which age group is the only group more likely to survive than die?
+titanic %>%
+    ggplot(aes(Age, fill=Survived)) +
+    geom_density(alpha = 0.2) +
+    geom_vline(xintercept = 70) +
+    geom_vline(xintercept = 80)
+
+#Which age group had the most deaths?
+#Which age group had the highest proportion of deaths?
+```
+
+
+Filter the data to remove individuals who paid a fare of 0. Make a boxplot of fare grouped by survival status. Try a log2 transformation of fares. Add the data points with jitter and alpha blending.
+
+```{r}
+titanic %>%
+    filter(Fare != 0) %>%
+    ggplot(aes(Fare, Survived)) +
+    geom_boxplot() +
+    scale_x_continuous(trans = "log2") +
+    geom_jitter(width = 0.1, alpha = 0.2)
+```
+
+The Pclass variable corresponds to the passenger class. Make three barplots. For the first, make a basic barplot of passenger class filled by survival. For the second, make the same barplot but use the argument position = position_fill() to show relative proportions in each group instead of counts. For the third, make a barplot of survival filled by passenger class using position = position_fill().
+```{r}
+#barplot 1
+titanic %>%
+    ggplot(aes(Pclass, fill = Survived)) +
+    geom_bar()
+
+#barplot 2
+titanic %>%
+    ggplot(aes(Pclass, fill = Survived)) +
+    geom_bar(position = position_fill())
+
+#barplot 3
+titanic %>%
+    ggplot(aes(Survived, fill = Pclass)) +
+    geom_bar(position = position_fill())
+```
+
+Create a grid of density plots for age, filled by survival status, with count on the y-axis, faceted by sex and passenger class.
+```{r}
+titanic %>%
+    ggplot(aes(Age, ..count..,fill = Survived)) +
+    geom_density(alpha = 0.2) +
+    facet_grid(Sex ~ Pclass)
+```
+
